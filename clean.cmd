@@ -8,6 +8,7 @@ call :removeFolder, "external"
 call :removeFolder, "AirLib\deps"
 call :removeFolder, "AirLib\temp"
 call :removeFolder, "AirLib\lib"
+call :removeFolder, "Unreal\Plugins\AirSim\Content\VehicleAdv\SUV"
 ECHO(   
 
 CALL :printHeader, "Cleaning visual studio solutions: Configuration = Debug"
@@ -37,7 +38,7 @@ CALL :printHeader, "Clean completed successfully"
 goto :eof
 
 :buildfailed
-CALL :printHeader, "Clean failed"
+CALL :printError, "Clean failed"
 goto :eof
 
 :setESC
@@ -62,5 +63,14 @@ if not "%~1"=="" (
     ECHO %ESC%[33m*****************************************************************************************%ESC%[0m
     ECHO %ESC%[33m%~1%ESC%%[0
     ECHO %ESC%[33m*****************************************************************************************%ESC%%[0m
+)
+exit /b 0
+
+:printError
+REM //---------- PrintError function ----------
+if not "%~1"=="" (
+REM    ECHO %ESC%[31m*****************************************************************************************%ESC%[0m
+    ECHO %ESC%[31m%~1%ESC%%[0
+REM  ECHO %ESC%[31m*****************************************************************************************%ESC%%[0m
 )
 exit /b 0

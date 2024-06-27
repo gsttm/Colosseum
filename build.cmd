@@ -5,6 +5,17 @@ setlocal
 call :setESC
 set ROOT_DIR=%~dp0
 
+REM // ------------  check VS version ------------ 
+CALL :printHeader, "Usage"
+ECHO %~n0%~x0 ^[--Debug^|--Release^|--RelWithDebInfo^] ^[--full-poly-car^]
+ECHO(
+ECHO Where:
+ECHO(
+ECHO    Debug - Build with Debug configuration. Omitting this optional parameter builds all configurations.
+ECHO    Release - Build with Release configuration. Omitting this optional parameter builds all configurations.
+ECHO    RelWithDebInfo - Build with RelWithDebInfo configuration. Omitting this optional parameter builds all configurations.
+ECHO    full-poly-car - Downloads a high-poly SUV car model
+ECHO(
 
 REM // ------------  check VS version ------------ 
 CALL :printHeader, "Check Visual Studio Version"
@@ -33,8 +44,8 @@ IF NOT "%1"=="" (
     ) ELSE IF "%1"=="--Release" (
         set buildMode="Release"
         SHIFT
-    ) ELSE IF "%1"=="--no-full-poly-car" (
-        set noFullPolyCar="y"
+    ) ELSE IF "%1"=="--full-poly-car" (
+        set includeFullPolyCar="y"
         SHIFT
     ) ELSE IF "%1"=="--RelWithDebInfo" (
         set buildMode="RelWithDebInfo"
@@ -46,7 +57,7 @@ IF NOT "%1"=="" (
     GOTO :loop
 )
 echo buildMode = %buildMode%
-echo noFullPolyCar = %noFullPolyCar%
+echo includeFullPolyCar = %includeFullPolyCar%
 ECHO(
 
 REM // ------------ Check for powershell ------------ 
@@ -61,7 +72,7 @@ set powershell=pwsh
 where pwsh > nul 2>&1
 if ERRORLEVEL 1 goto :nopwsh
 set PWSHV7=1
-echo found pwsh && goto start
+echo found pwsh && goto :start
 
 :nopwsh
 echo Powershell or pwsh not found, please install it.
@@ -168,18 +179,14 @@ if %buildMode% == "" (
 )
 ECHO(   
 
-
 REM //---------- get High PolyCount SUV Car Model ------------
 CALL :printHeader, "Configure High Polycount SUV car model"
 
 IF NOT EXIST Unreal\Plugins\AirSim\Content\VehicleAdv mkdir Unreal\Plugins\AirSim\Content\VehicleAdv
 IF NOT EXIST Unreal\Plugins\AirSim\Content\VehicleAdv\SUV\v1.2.0 (
-    IF NOT DEFINED noFullPolyCar (
+    IF %includeFullPolyCar% == "y" (
         REM //leave some blank lines because %powershell% shows download banner at top of console
-        ECHO(   
-        ECHO(   
-        ECHO(   
-        ECHO "Downloading high-poly car assets. To install without this assets, re-run build.cmd with the argument --no-full-poly-car"
+        ECHO Downloading high-poly car assets. To install without this assets, re-run build.cmd with the argument --full-poly-car
 
         IF EXIST suv_download_tmp rmdir suv_download_tmp /q /s
         mkdir suv_download_tmp
@@ -192,13 +199,13 @@ IF NOT EXIST Unreal\Plugins\AirSim\Content\VehicleAdv\SUV\v1.2.0 (
             %powershell% -command "iwr https://github.com/CodexLabsLLC/Colosseum/releases/download/v2.0.0-beta.0/car_assets.zip -OutFile suv_download_tmp\car_assets.zip"
         )
         @echo off
-        rmdir /S /Q Unreal\Plugins\AirSim\Content\VehicleAdv\SUV
+        IF EXIST Unreal\Plugins\AirSim\Content\VehicleAdv\SUV (rmdir /S /Q Unreal\Plugins\AirSim\Content\VehicleAdv\SUV)
         %powershell% -command "Expand-Archive -Path suv_download_tmp\car_assets.zip -DestinationPath Unreal\Plugins\AirSim\Content\VehicleAdv"
         rmdir suv_download_tmp /q /s
         
         REM //Don't fail the build if the high-poly car is unable to be downloaded
         REM //Instead, just notify users that the gokart will be used.
-        IF NOT EXIST Unreal\Plugins\AirSim\Content\VehicleAdv\SUV ECHO Unable to download high-polycount SUV. Your AirSim build will use the default vehicle.
+        IF NOT EXIST Unreal\Plugins\AirSim\Content\VehicleAdv\SUV CALL :printError "Unable to download high-polycount SUV. Your AirSim build will use the default vehicle."
     ) else (
         ECHO Not downloading high-poly car asset. The default unreal vehicle will be used.
     )
