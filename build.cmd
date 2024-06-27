@@ -182,9 +182,10 @@ ECHO(
 REM //---------- get High PolyCount SUV Car Model ------------
 CALL :printHeader, "Configure High Polycount SUV car model"
 
+@echo on
 IF NOT EXIST Unreal\Plugins\AirSim\Content\VehicleAdv mkdir Unreal\Plugins\AirSim\Content\VehicleAdv
 IF NOT EXIST Unreal\Plugins\AirSim\Content\VehicleAdv\SUV\v1.2.0 (
-    IF %includeFullPolyCar% == "y" (
+    IF "%includeFullPolyCar%" == "y" (
         REM //leave some blank lines because %powershell% shows download banner at top of console
         ECHO Downloading high-poly car assets. To install without this assets, re-run build.cmd with the argument --full-poly-car
 
