@@ -118,12 +118,21 @@ namespace airlib
     private: //methods
         static void setOutput(Output& output, const RotorParams& params, const FirstOrderFilter<real_T>& control_signal_filter, RotorTurningDirection turning_direction)
         {
-            output.control_signal_input = control_signal_filter.getInput();
-            output.control_signal_filtered = control_signal_filter.getOutput();
+            output.control_signal_input = (float)control_signal_filter.getInput();
+            output.control_signal_filtered = (float)control_signal_filter.getOutput();
             //see relationship of rotation speed with thrust: http://physics.stackexchange.com/a/32013/14061
-            output.speed = sqrt(output.control_signal_filtered * params.max_speed_square);
-            output.thrust = output.control_signal_filtered * params.max_thrust;
-            output.torque_scaler = output.control_signal_filtered * params.max_torque * static_cast<int>(turning_direction);
+            
+            float motor_speeds[51] = { 0, 0, 0, 0, 0, 0, 0, 0, 3753, 4601, 5322, 5995, 6752, 7466, 8103, 8779, 9529, 10250, 10872, 11580, 12155, 12798, 13470, 14088, 14744, 15305, 15771, 16240, 16690, 17102, 17591, 18090, 18598, 19236, 19660, 20172, 20612, 21192, 21536, 19462, 22656, 22908, 23386, 23785, 24120, 24498, 24890, 25223, 25545, 25853, 26024 };
+            float motor_thrusts[51] = {0, 0, 0, 0, 0, 0, 0, 0.00584632270310872, 0.0140733537902564, 0.0206459651921767, 0.026399911495665, 0.0366524399829979, 0.0479390717525605, 0.0576198156547865, 0.069191757451541, 0.0840208916811748, 0.100955497458412, 0.115705443598866, 0.135160093861176, 0.156054104097401, 0.169619722492329, 0.192924311325644, 0.218814158364533, 0.237798338214658, 0.265252150014848, 0.287170947287517, 0.30380510413816, 0.326548389162877, 0.347096533774302, 0.366393972388977, 0.389839469439802, 0.415023610860414, 0.437347664824767, 0.466642599698386, 0.489689827241867, 0.517066780014324, 0.546315133659014, 0.572179361021992, 0.599647147190861, 0.630189294469061, 0.662712308507479, 0.68725129990742, 0.714393017473784, 0.734342593293468, 0.760111329137141, 0.794010818490419, 0.815931944824534, 0.838023092644242, 0.863345813220917, 0.883708797447349, 0.894279242822124 };
+            float converted_signal = 1000 + output.control_signal_filtered * 1000;
+            float rounded = ((converted_signal+ 20 - 1) / 20) * 20;
+            int closest_idx = static_cast<int>((rounded - 1000) / 51);
+
+            output.speed = motor_speeds[closest_idx];
+            output.thrust = 9.8*motor_thrusts[closest_idx];
+            //output.speed = sqrt(output.control_signal_filtered * params.max_speed_square);
+            //output.thrust = output.control_signal_filtered * params.max_thrust;
+            output.torque_scaler = (float) (output.thrust*12) * static_cast<int>(turning_direction);
             output.turning_direction = turning_direction;
         }
 
